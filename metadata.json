@@ -1,0 +1,6 @@
+{
+  "name": "2-chi Miya",
+  "description": "Shaxsiy xotiralar va bilimlar uchun quvnoq, aqlli ikkinchi miya (Semantic search & Telegram bot)",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,54 @@
+{
+  "entities": {
+    "Memory": {
+      "title": "Memory",
+      "description": "A single personal knowledge memory in 2-chi Miya",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the memory"
+        },
+        "title": {
+          "type": "string",
+          "description": "Memory title"
+        },
+        "content": {
+          "type": "string",
+          "description": "Full memory content text"
+        },
+        "category": {
+          "type": "string",
+          "description": "Category classification"
+        },
+        "isPrivate": {
+          "type": "boolean",
+          "description": "Whether memory is private"
+        },
+        "source": {
+          "type": "string",
+          "description": "Source of information"
+        },
+        "tags": {
+          "type": "array",
+          "description": "Associated keywords"
+        },
+        "date": {
+          "type": "string",
+          "description": "Creation date"
+        },
+        "createdAt": {
+          "type": "number",
+          "description": "Creation timestamp"
+        }
+      },
+      "required": ["id", "title", "content", "category", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/memories/{memoryId}": {
+      "schema": "Memory",
+      "description": "Collection of personal knowledge memories"
+    }
+  }
+}
