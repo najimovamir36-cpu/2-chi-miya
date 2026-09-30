@@ -152,14 +152,6 @@ export const ResultCard: React.FC<ResultCardProps> = ({
             )}
           </div>
 
-          {/* Highlighted Quote from memory */}
-          {data.highlightedQuote && (
-            <div className="p-3.5 rounded-2xl bg-neutral-900/80 border border-neutral-800 text-xs sm:text-sm text-neutral-300 font-mono flex items-start gap-2.5">
-              <span className="text-emerald-400 font-bold shrink-0">“</span>
-              <p className="flex-1 italic">{data.highlightedQuote}</p>
-            </div>
-          )}
-
           {/* Collapsible Original Memory Details */}
           <div className="pt-2 border-t border-neutral-900">
             <button
@@ -200,57 +192,6 @@ export const ResultCard: React.FC<ResultCardProps> = ({
           </div>
         </div>
       </div>
-
-      {/* Similar Memories Section */}
-      {data.similarMemories && data.similarMemories.length > 0 && (
-        <div className="rounded-2xl bg-neutral-950/60 border border-neutral-900 p-4">
-          <div className="text-xs font-mono text-neutral-400 mb-3 flex items-center justify-between">
-            <span>Shunga o‘xshash yana {data.similarMemories.length} ta narsa topildi:</span>
-            <span className="text-[10px] text-neutral-600">Bosing va ko‘ring</span>
-          </div>
-
-          <div className="space-y-2">
-            {data.similarMemories.map((sim) => (
-              <div
-                key={sim.id}
-                onClick={() => {
-                  if (onSelectSimilarMemory) onSelectSimilarMemory(sim);
-                  setSelectedSimilar(selectedSimilar?.id === sim.id ? null : sim);
-                }}
-                className="group cursor-pointer p-3 rounded-xl bg-neutral-900/60 hover:bg-neutral-850 border border-neutral-850 hover:border-neutral-750 transition-all"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-semibold text-neutral-200 group-hover:text-emerald-400 transition-colors">
-                      {sim.title}
-                    </span>
-                    {sim.isPrivate && (
-                      <span className="text-[9px] font-mono text-red-400 bg-red-950/40 px-1.5 py-0.2 rounded border border-red-900/40">
-                        🔒 Maxfiy
-                      </span>
-                    )}
-                  </div>
-                  <span className="text-[10px] font-mono text-neutral-500">
-                    {sim.category}
-                  </span>
-                </div>
-
-                <p className="text-xs text-neutral-400 line-clamp-1 mt-1">
-                  {sim.content}
-                </p>
-
-                {selectedSimilar?.id === sim.id && (
-                  <div className="mt-2.5 pt-2 border-t border-neutral-800 text-xs text-neutral-300 font-mono bg-black/40 p-2.5 rounded-lg animate-fade-in">
-                    <div className="text-emerald-400 font-bold mb-1">To‘liq matn:</div>
-                    <p>{sim.content}</p>
-                    <div className="mt-1 text-[10px] text-neutral-500">Sana: {sim.date}</div>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 };
