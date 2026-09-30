@@ -11,6 +11,7 @@ export interface MemoryItem {
   tags?: string[];
   score?: number;
   isPrivate?: boolean;
+  createdAt?: number;
 }
 
 export interface SearchResultData {

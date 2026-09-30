@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Sparkles, Send, X, Zap, Shield, Flame, Trash2, UserCheck } from 'lucide-react';
 
+import { localAmirTemurChat } from '../utils/localSearch.ts';
+
 interface ChatMessage {
   id: string;
   role: 'user' | 'model';
@@ -9,12 +11,15 @@ interface ChatMessage {
   time: string;
 }
 
+import { MemoryItem } from './ResultCard.tsx';
+
 interface AmirTemurModalProps {
   isOpen: boolean;
   onClose: () => void;
+  memories?: MemoryItem[];
 }
 
-export const AmirTemurModal: React.FC<AmirTemurModalProps> = ({ isOpen, onClose }) => {
+export const AmirTemurModal: React.FC<AmirTemurModalProps> = ({ isOpen, onClose, memories = [] }) => {
   const [mode, setMode] = useState<'gemini' | 'grok'>('gemini');
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -104,7 +109,18 @@ export const AmirTemurModal: React.FC<AmirTemurModalProps> = ({ isOpen, onClose 
         ]);
       }
     } catch (err) {
-      console.error('Amir Temur chat network error:', err);
+      // Fallback on Vercel static mode
+      const localReply = localAmirTemurChat(textToSend, mode, memories);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: 'temur-' + Date.now(),
+          role: 'model',
+          text: localReply,
+          mode,
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        },
+      ]);
     } finally {
       setIsLoading(false);
     }

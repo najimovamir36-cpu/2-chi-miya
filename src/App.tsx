@@ -9,6 +9,8 @@ import { StatsModal } from './components/StatsModal.tsx';
 import { AmirTemurModal } from './components/AmirTemurModal.tsx';
 import { MascotMood } from './components/BrainMascot.tsx';
 import { Sparkles, Brain, Bot, BarChart2, FolderLock, ShieldAlert, Crown } from 'lucide-react';
+import { INITIAL_MEMORIES } from './data/initialMemories.ts';
+import { localSearchMemories } from './utils/localSearch.ts';
 
 export default function App() {
   const [searchResult, setSearchResult] = useState<SearchResultData | null>(null);
@@ -24,8 +26,17 @@ export default function App() {
   const [isAmirTemurOpen, setIsAmirTemurOpen] = useState(false);
   const [isDirectPrivatePromptOpen, setIsDirectPrivatePromptOpen] = useState(false);
 
-  // Stored memories for manager
-  const [allMemories, setAllMemories] = useState<MemoryItem[]>([]);
+  // Stored memories for manager - with immediate INITIAL_MEMORIES guarantee on Vercel
+  const [allMemories, setAllMemories] = useState<MemoryItem[]>(() => {
+    try {
+      const saved = localStorage.getItem('miya_local_memories');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {}
+    return INITIAL_MEMORIES;
+  });
   const [unlockedPrivatePassword, setUnlockedPrivatePassword] = useState<string | null>(null);
 
   // Rotating funny search messages
@@ -41,7 +52,7 @@ export default function App() {
 
   const statusTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Load all memories on start
+  // Load all memories on start with automatic Vercel fallback
   const fetchMemories = async () => {
     try {
       const headers: Record<string, string> = {};
@@ -51,11 +62,20 @@ export default function App() {
       const res = await fetch('/api/memories', { headers });
       if (res.ok) {
         const data = await res.json();
-        setAllMemories(data);
+        if (Array.isArray(data) && data.length > 0) {
+          setAllMemories(data);
+          try {
+            localStorage.setItem('miya_local_memories', JSON.stringify(data));
+          } catch {}
+          return;
+        }
       }
     } catch (err) {
-      console.error('Failed to load memories:', err);
+      // Offline or static Vercel deployment
     }
+
+    // Fallback to rich initial memories
+    setAllMemories((prev) => (prev.length > 0 ? prev : INITIAL_MEMORIES));
   };
 
   useEffect(() => {
@@ -79,11 +99,12 @@ export default function App() {
       setStatusMessage(searchStatusList[msgIndex]);
     }, 600);
 
+    const effectivePwd = forcedPassword || unlockedPrivatePassword;
+
     try {
       const payload: Record<string, string> = { query: queryText };
-      const pwd = forcedPassword || unlockedPrivatePassword;
-      if (pwd) {
-        payload.password = pwd;
+      if (effectivePwd) {
+        payload.password = effectivePwd;
       }
 
       const res = await fetch('/api/search', {
@@ -92,27 +113,40 @@ export default function App() {
         body: JSON.stringify(payload),
       });
 
-      const data: SearchResultData = await res.json();
-      setSearchResult(data);
+      if (res.ok) {
+        const data: SearchResultData = await res.json();
+        setSearchResult(data);
 
-      if (data.isPrivate && !data.isUnlocked) {
-        setMascotMood('private');
-      } else if (data.found && data.primaryMemory) {
-        setMascotMood('found');
-      } else {
-        setMascotMood('empty');
+        if (data.isPrivate && !data.isUnlocked) {
+          setMascotMood('private');
+        } else if (data.found && data.primaryMemory) {
+          setMascotMood('found');
+        } else {
+          setMascotMood('empty');
+        }
+        return;
       }
     } catch (err) {
-      console.error('Search failed:', err);
-      setSearchResult({
-        found: false,
-        answer: 'Miya biroz yiqilib tushdi.',
-        wittyRemark: 'Miyadagi neyronlar biroz chalkashib ketdi. Yana urintirib ko‘r 😂',
-      });
-      setMascotMood('empty');
+      // Backend not running (e.g. static Vercel deploy) - seamless local search takes over!
     } finally {
       if (statusTimerRef.current) clearInterval(statusTimerRef.current);
       setIsSearching(false);
+    }
+
+    // Client-side instant resilient search
+    const localData = localSearchMemories(
+      queryText,
+      allMemories.length > 0 ? allMemories : INITIAL_MEMORIES,
+      effectivePwd || undefined
+    );
+    setSearchResult(localData);
+
+    if (localData.isPrivate && !localData.isUnlocked) {
+      setMascotMood('private');
+    } else if (localData.found && localData.primaryMemory) {
+      setMascotMood('found');
+    } else {
+      setMascotMood('empty');
     }
   };
 
@@ -246,6 +280,7 @@ export default function App() {
       <AmirTemurModal
         isOpen={isAmirTemurOpen}
         onClose={() => setIsAmirTemurOpen(false)}
+        memories={allMemories}
       />
 
       <TelegramSimulatorModal
